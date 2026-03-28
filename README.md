@@ -49,10 +49,22 @@ Este proyecto fue desarrollado como solución práctica para la gestión de info
 
 ![Flujo](docs/flujo.png)
 
-1. Cliente consulta el estado actual (GET)
-2. Usuario edita contenido (PATCH)
-3. Se incrementa versión en base de datos
-4. Clientes reciben actualización automáticamente
+## 🔄 Flujo de funcionamiento
+
+El sistema utiliza un modelo de sincronización basado en versionado y consultas periódicas (long polling):
+
+1. La aplicación de escritorio realiza una solicitud **GET** a la API incluyendo la versión actual del texto.
+2. La API consulta la base de datos (DynamoDB) y compara la versión almacenada con la del cliente:
+
+   * Si la versión es diferente, devuelve el nuevo contenido actualizado.
+   * Si la versión es la misma, mantiene la conexión activa (long polling) hasta que haya cambios o se alcance un timeout.
+3. Cuando el cliente recibe una nueva versión, actualiza automáticamente la interfaz.
+4. En paralelo, el cliente web obtiene el contenido mediante una solicitud **GET** y lo muestra al usuario.
+5. Cuando el usuario realiza una modificación desde la web, se envía una solicitud **PATCH** a la API con el nuevo contenido.
+6. El backend procesa la actualización, guarda el nuevo texto en la base de datos e incrementa la versión.
+7. Este cambio permite que los clientes en espera (long polling) detecten la nueva versión y sincronicen su contenido.
+
+Este enfoque permite mantener múltiples clientes sincronizados en tiempo real sin necesidad de utilizar WebSockets.
 
 ---
 
@@ -89,8 +101,9 @@ Debido a que se utiliza en un entorno controlado:
 
 ## 📸 Capturas
 
-![App](docs/screenshot.png)
-
+![Interfaz](docs/interfaz.png)
+![Info](docs/info.png)
+![Web](docs/web.png)
 
 ---
 
